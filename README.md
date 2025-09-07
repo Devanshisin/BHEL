@@ -104,5 +104,4 @@ The Application Hosting Portal is a comprehensive system designed to manage appl
 ## License
 This project is licensed under the MIT License.
 
----
-*Prepared professionally for internship submission.*
+
