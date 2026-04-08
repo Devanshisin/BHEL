@@ -119,19 +119,15 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use('/uploads', express.static('uploads'));
 
 // Test route for CORS
-app.options('/test', (req, res) => {
-  console.log("🔥 OPTIONS /test received from:", req.headers.origin);
-
-  res.setHeader("Access-Control-Allow-Origin", "https://bhel-project.vercel.app");
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+app.options('*', (req, res) => {
+  const origin = req.headers.origin;
+  if (origin === "https://bhel-project.vercel.app" || origin?.endsWith(".vercel.app")) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+  }
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
   res.setHeader("Access-Control-Allow-Credentials", "true");
-
   res.sendStatus(200);
-});
-
-app.get('/test', (req, res) => {
-  res.json({ message: "Test route working!" });
 });
 
 
