@@ -91,7 +91,7 @@ require('dotenv').config();
 
 const app = express();
 
-// ✅ Manual CORS middleware
+// ✅ CORS middleware at the very top
 const allowedOrigins = [
   "https://bhel-project.vercel.app",
   "http://localhost:3000" // optional for local dev
@@ -100,11 +100,11 @@ const allowedOrigins = [
 app.use((req, res, next) => {
   const origin = req.headers.origin;
   if (allowedOrigins.includes(origin)) {
-    res.header("Access-Control-Allow-Origin", origin);
+    res.setHeader("Access-Control-Allow-Origin", origin);
   }
-  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
-  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
-  res.header("Access-Control-Allow-Credentials", "true");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.setHeader("Access-Control-Allow-Credentials", "true");
 
   if (req.method === "OPTIONS") {
     return res.sendStatus(200);
@@ -112,7 +112,7 @@ app.use((req, res, next) => {
   next();
 });
 
-// ✅ Connect to MongoDB
+// ✅ Connect DB and parsers
 connectDB();
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
@@ -126,31 +126,13 @@ app.use('/api/reviewer', require('./routes/reviewer'));
 
 // ✅ Health check
 app.get('/api/health', (req, res) => {
-  res.json({
-    message: 'Application Hosting Portal Backend is running',
-    timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'development'
-  });
+  res.json({ message: 'Backend running', timestamp: new Date().toISOString() });
 });
 
-// ✅ Error handling middleware
+// ✅ Error handling
 app.use((err, req, res, next) => {
   console.error(err.stack);
-
-  if (err.name === 'MulterError') {
-    return res.status(400).json({ message: 'File upload error', error: err.message });
-  }
-  if (err.name === 'ValidationError') {
-    return res.status(400).json({ message: 'Validation error', error: err.message });
-  }
-  if (err.name === 'JsonWebTokenError') {
-    return res.status(401).json({ message: 'Invalid token', error: 'Authentication failed' });
-  }
-
-  res.status(500).json({
-    message: 'Something went wrong!',
-    error: process.env.NODE_ENV === 'development' ? err.message : 'Internal server error'
-  });
+  res.status(500).json({ message: 'Internal server error', error: err.message });
 });
 
 // ✅ 404 handler
