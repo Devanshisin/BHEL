@@ -90,6 +90,18 @@ const connectDB = require('./config/database');
 require('dotenv').config();
 
 const app = express();
+// Global OPTIONS handler
+app.options('*', (req, res) => {
+  const origin = req.headers.origin;
+  if (origin === "https://bhel-project.vercel.app" || origin?.endsWith(".vercel.app")) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+  }
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+  console.log("🔥 Global OPTIONS received from:", origin);
+  res.sendStatus(200);
+});
 
 // ✅ CORS middleware at the very top
 const allowedOrigins = [
@@ -117,19 +129,6 @@ connectDB();
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use('/uploads', express.static('uploads'));
-
-// Test route for CORS
-app.options('*', (req, res) => {
-  const origin = req.headers.origin;
-  if (origin === "https://bhel-project.vercel.app" || origin?.endsWith(".vercel.app")) {
-    res.setHeader("Access-Control-Allow-Origin", origin);
-  }
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-  res.setHeader("Access-Control-Allow-Credentials", "true");
-  res.sendStatus(200);
-});
-
 
 // ✅ Routes
 app.use('/api/auth', require('./routes/auth'));
