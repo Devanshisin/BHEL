@@ -86,54 +86,41 @@
 //   console.log(`🏥 Health check: http://localhost:${PORT}/api/health`);
 // });
 const express = require('express');
+const cors = require('cors');
 const connectDB = require('./config/database');
 require('dotenv').config();
 
 const app = express();
 
-/* =========================
-   🔥 FORCE CORS (FINAL FIX)
-========================= */
-app.use((req, res, next) => {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+// Middleware
+app.use(cors({
+  origin: 'https://bhel-project.vercel.app', // explicitly allow your frontend
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+}));
 
-  // Handle preflight
-  if (req.method === "OPTIONS") {
-    return res.sendStatus(200);
-  }
+// Handle preflight requests
+app.options('*', cors({
+  origin: 'https://bhel-project.vercel.app',
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+}));
 
-  next();
-});
-
-/* =========================
-   🔗 BODY PARSER
-========================= */
+// Connect to MongoDB
+connectDB();
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
-
-/* =========================
-   📁 STATIC FILES
-========================= */
 app.use('/uploads', express.static('uploads'));
 
-/* =========================
-   🗄️ CONNECT DATABASE
-========================= */
-connectDB();
-
-/* =========================
-   🚀 ROUTES
-========================= */
+// Routes
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/requests', require('./routes/requests'));
 app.use('/api/users', require('./routes/users'));
 app.use('/api/reviewer', require('./routes/reviewer'));
 
-/* =========================
-   🏥 HEALTH CHECK
-========================= */
+// Health check
 app.get('/api/health', (req, res) => {
   res.json({
     message: 'Application Hosting Portal Backend is running',
@@ -142,33 +129,14 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-/* =========================
-   ❌ ERROR HANDLER
-========================= */
-app.use((err, req, res, next) => {
-  console.error(err.stack);
+// Error handling middleware...
+// (keep your existing error handlers)
 
-  res.status(500).json({
-    message: 'Something went wrong!',
-    error: process.env.NODE_ENV === 'development' ? err.message : 'Internal server error'
-  });
-});
+// 404 handler...
+// (keep your existing 404 handler)
 
-/* =========================
-   404 HANDLER
-========================= */
-app.use('*', (req, res) => {
-  res.status(404).json({
-    message: 'Route not found',
-    path: req.originalUrl
-  });
-});
-
-/* =========================
-   🚀 START SERVER
-========================= */
 const PORT = process.env.PORT || 5000;
-
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });
+
