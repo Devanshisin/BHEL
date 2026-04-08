@@ -10,9 +10,7 @@ connectDB();
 
 // Middleware
 app.use(cors({
-  origin:["https://bhel-project.vercel.app",
-    "https://bhel-project-pdc9ffxnv-devanshisins-projects.vercel.app"
-  ],
+  origin:true,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
