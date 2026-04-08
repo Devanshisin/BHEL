@@ -85,6 +85,26 @@
 //   console.log(`📁 File uploads: /uploads directory`);
 //   console.log(`🏥 Health check: http://localhost:${PORT}/api/health`);
 // });
+const allowedOrigins = [
+  "https://bhel-project.vercel.app",
+  "http://localhost:3000" // optional for local dev
+];
+
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin)) {
+    res.header("Access-Control-Allow-Origin", origin);
+  }
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.header("Access-Control-Allow-Credentials", "true");
+
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(200);
+  }
+  next();
+});
+
 const express = require('express');
 const cors = require('cors');
 const connectDB = require('./config/database');
