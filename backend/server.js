@@ -85,6 +85,13 @@
 //   console.log(`📁 File uploads: /uploads directory`);
 //   console.log(`🏥 Health check: http://localhost:${PORT}/api/health`);
 // });
+const express = require('express');
+const connectDB = require('./config/database');
+require('dotenv').config();
+
+const app = express();
+
+// ✅ Manual CORS middleware
 const allowedOrigins = [
   "https://bhel-project.vercel.app",
   "http://localhost:3000" // optional for local dev
@@ -105,48 +112,19 @@ app.use((req, res, next) => {
   next();
 });
 
-const express = require('express');
-const cors = require('cors');
-const connectDB = require('./config/database');
-require('dotenv').config();
-
-const app = express();
-
-// Explicit CORS configuration
-const allowedOrigins = [
-  'https://bhel-project.vercel.app', // production frontend
-  'http://localhost:3000'            // local dev (optional)
-];
-
-app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true
-}));
-
-// Handle preflight requests globally
-app.options('*', cors());
-
-// Connect to MongoDB
+// ✅ Connect to MongoDB
 connectDB();
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use('/uploads', express.static('uploads'));
 
-// Routes
+// ✅ Routes
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/requests', require('./routes/requests'));
 app.use('/api/users', require('./routes/users'));
 app.use('/api/reviewer', require('./routes/reviewer'));
 
-// Health check
+// ✅ Health check
 app.get('/api/health', (req, res) => {
   res.json({
     message: 'Application Hosting Portal Backend is running',
@@ -155,9 +133,32 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Error handling middleware...
-// 404 handler...
+// ✅ Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
 
+  if (err.name === 'MulterError') {
+    return res.status(400).json({ message: 'File upload error', error: err.message });
+  }
+  if (err.name === 'ValidationError') {
+    return res.status(400).json({ message: 'Validation error', error: err.message });
+  }
+  if (err.name === 'JsonWebTokenError') {
+    return res.status(401).json({ message: 'Invalid token', error: 'Authentication failed' });
+  }
+
+  res.status(500).json({
+    message: 'Something went wrong!',
+    error: process.env.NODE_ENV === 'development' ? err.message : 'Internal server error'
+  });
+});
+
+// ✅ 404 handler
+app.use('*', (req, res) => {
+  res.status(404).json({ message: 'Route not found', path: req.originalUrl });
+});
+
+// ✅ Start server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server running on port ${PORT}`);
