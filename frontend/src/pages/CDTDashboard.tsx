@@ -6,7 +6,7 @@ import { Modal } from '../components/ui/Modal';
 import { useNavigate } from 'react-router-dom';
 
 // API configuration
-const API_BASE_URL = 'https://bhel-internshipproject-t3ur.onrender.com';
+const API_BASE_URL = 'https://bhel-internshipproject-t3ur.onrender.com/api';
 
 interface Request {
   _id: string;
