@@ -86,73 +86,68 @@
 //   console.log(`🏥 Health check: http://localhost:${PORT}/api/health`);
 // });
 const express = require('express');
+const cors = require('cors');
 const connectDB = require('./config/database');
 require('dotenv').config();
 
 const app = express();
-// Global OPTIONS handler
-app.options('*', (req, res) => {
-  const origin = req.headers.origin;
-  if (origin === "https://bhel-project.vercel.app" || origin?.endsWith(".vercel.app")) {
-    res.setHeader("Access-Control-Allow-Origin", origin);
-  }
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-  res.setHeader("Access-Control-Allow-Credentials", "true");
-  console.log("🔥 Global OPTIONS received from:", origin);
-  res.sendStatus(200);
-});
 
-// ✅ CORS middleware at the very top
 const allowedOrigins = [
-  "https://bhel-project.vercel.app",
-  "http://localhost:3000" // optional for local dev
+  'https://bhel-project.vercel.app',
+  'http://localhost:3000'
 ];
 
-app.use((req, res, next) => {
-  const origin = req.headers.origin;
-  if (allowedOrigins.includes(origin)) {
-    res.setHeader("Access-Control-Allow-Origin", origin);
-  }
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-  res.setHeader("Access-Control-Allow-Credentials", "true");
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error('Not allowed by CORS'));
+  },
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
+  preflightContinue: false,
+  optionsSuccessStatus: 204
+};
 
-  if (req.method === "OPTIONS") {
-    return res.sendStatus(200);
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
+
+app.use((req, res, next) => {
+  const origin = req.header('Origin');
+  if (origin && allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
   }
   next();
 });
 
-// ✅ Connect DB and parsers
 connectDB();
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use('/uploads', express.static('uploads'));
 
-// ✅ Routes
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/requests', require('./routes/requests'));
 app.use('/api/users', require('./routes/users'));
 app.use('/api/reviewer', require('./routes/reviewer'));
 
-// ✅ Health check
 app.get('/api/health', (req, res) => {
   res.json({ message: 'Backend running', timestamp: new Date().toISOString() });
 });
 
-// ✅ Error handling
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({ message: 'Internal server error', error: err.message });
 });
 
-// ✅ 404 handler
 app.use('*', (req, res) => {
   res.status(404).json({ message: 'Route not found', path: req.originalUrl });
 });
 
-// ✅ Start server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server running on port ${PORT}`);
