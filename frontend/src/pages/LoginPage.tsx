@@ -6,7 +6,7 @@ import { Input } from '../components/ui/Input';
 import { Card } from '../components/ui/Card';
 
 // API configuration
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = 'https://bhel-internshipproject-t3ur.onrender.com';
 
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
