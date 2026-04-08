@@ -92,21 +92,27 @@ require('dotenv').config();
 
 const app = express();
 
-// Middleware
+// Explicit CORS configuration
+const allowedOrigins = [
+  'https://bhel-project.vercel.app', // production frontend
+  'http://localhost:3000'            // local dev (optional)
+];
+
 app.use(cors({
-  origin: 'https://bhel-project.vercel.app', // explicitly allow your frontend
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
 }));
 
-// Handle preflight requests
-app.options('*', cors({
-  origin: 'https://bhel-project.vercel.app',
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true
-}));
+// Handle preflight requests globally
+app.options('*', cors());
 
 // Connect to MongoDB
 connectDB();
@@ -130,13 +136,9 @@ app.get('/api/health', (req, res) => {
 });
 
 // Error handling middleware...
-// (keep your existing error handlers)
-
 // 404 handler...
-// (keep your existing 404 handler)
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });
-
